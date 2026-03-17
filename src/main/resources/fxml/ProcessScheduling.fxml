@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.control.SpinnerValueFactory?>
+<?import javafx.geometry.Insets?>
+<?import javafx.geometry.Pos?>
+<?import javafx.collections.FXCollections?>
+<?import java.lang.Integer?>
+
+<VBox xmlns="http://javafx.com/javafx/17.0.6" 
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.homework.osexperiment.osexp.controller.ProcessSchedulingController"
+      spacing="15"
+      alignment="CENTER"
+      styleClass="experiment-container"
+      prefWidth="1300"
+      prefHeight="850">
+    
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+    
+    <!-- 标题 -->
+    <Label text="实验三：进程调度模拟" 
+           styleClass="experiment-title-label"/>
+    
+    <!-- 算法选择区域 -->
+    <HBox spacing="20" 
+          alignment="CENTER"
+          styleClass="config-section">
+        <fx:define>
+            <ToggleGroup fx:id="algorithmGroup"/>
+        </fx:define>
+        <Label text="📋 选择调度算法：" styleClass="section-title"/>
+        <RadioButton fx:id="radioFCFS" text="先来先服务 (FCFS)" selected="true" toggleGroup="$algorithmGroup" styleClass="algorithm-radio"/>
+        <RadioButton fx:id="radioSJF" text="短作业优先 (SJF)" toggleGroup="$algorithmGroup" styleClass="algorithm-radio"/>
+        <RadioButton fx:id="radioRR" text="时间片轮转 (RR)" toggleGroup="$algorithmGroup" styleClass="algorithm-radio"/>
+        <RadioButton fx:id="radioPriority" text="优先级调度" toggleGroup="$algorithmGroup" styleClass="algorithm-radio"/>
+        <HBox spacing="5" alignment="CENTER_LEFT">
+            <Label fx:id="lblTimeSliceSetting" text="⏱️ 时间片:" styleClass="small-label"/>
+            <Spinner fx:id="spinnerTimeSlice" prefWidth="60" styleClass="time-spinner"/>
+            <Label text="ms" styleClass="small-label"/>
+        </HBox>
+        <!-- RR 算法信息显示 -->
+        <HBox fx:id="rrInfoBox" spacing="15" alignment="CENTER_LEFT" visible="false" managed="false" styleClass="rr-info-box">
+            <Label fx:id="lblMaxRounds" text="" styleClass="rr-info-label"/>
+            <Label fx:id="lblUnfinishedProcesses" text="" styleClass="rr-info-label"/>
+        </HBox>
+    </HBox>
+    
+    <!-- 添加进程区域 -->
+    <HBox spacing="15" 
+          alignment="CENTER"
+          styleClass="config-section">
+        <Label text="➕ 添加进程：" styleClass="section-title"/>
+        <HBox spacing="8" alignment="CENTER">
+            <Label text="进程名:" styleClass="small-label"/>
+            <TextField fx:id="txtProcessName" prefWidth="80" promptText="如：A" styleClass="process-input"/>
+        </HBox>
+        <HBox spacing="8" alignment="CENTER">
+            <Label text="运行时间:" styleClass="small-label"/>
+            <Spinner fx:id="spinnerBurstTime" prefWidth="70" styleClass="time-spinner"/>
+            <Label text="ms" styleClass="small-label"/>
+        </HBox>
+        <HBox spacing="8" alignment="CENTER">
+            <Label text="优先级:" styleClass="small-label"/>
+            <ComboBox fx:id="comboPriority" prefWidth="70" styleClass="priority-combo">
+                <items>
+                    <FXCollections fx:factory="observableArrayList">
+                        <Integer fx:value="1" />
+                        <Integer fx:value="2" />
+                        <Integer fx:value="3" />
+                        <Integer fx:value="4" />
+                        <Integer fx:value="5" />
+                    </FXCollections>
+                </items>
+            </ComboBox>
+        </HBox>
+        <Button fx:id="btnAddProcess" text="添加进程" onAction="#handleAddProcess" prefWidth="90" styleClass="add-button"/>
+        <Button fx:id="btnClearQueue" text="清空队列" onAction="#handleClearQueue" prefWidth="90" styleClass="clear-button"/>
+    </HBox>
+    
+    <!-- 就绪队列显示 -->
+    <VBox spacing="8" 
+          alignment="CENTER"
+          styleClass="queue-section">
+        <Label text="📝 就绪队列：" styleClass="section-title"/>
+        <HBox fx:id="readyQueueContainer" 
+              spacing="10" 
+              alignment="CENTER_LEFT"
+              styleClass="ready-queue"
+              prefWidth="800"
+              prefHeight="80"/>
+    </VBox>
+    
+    <!-- 画布区域 - 用于显示调度动画（扩大） -->
+    <VBox fx:id="canvasContainer"
+          styleClass="canvas-container"
+          prefWidth="1250"
+          prefHeight="550"
+          alignment="CENTER">
+        <!-- 动态内容区 -->
+        <Pane fx:id="animationArea" 
+              styleClass="animation-area"
+              prefWidth="1230"
+              prefHeight="490">
+            <!-- CPU 区域 -->
+            <VBox fx:id="cpuArea" 
+                  styleClass="cpu-container"
+                  layoutX="60.0" 
+                  layoutY="120.0"
+                  prefWidth="220.0"
+                  prefHeight="300.0"
+                  alignment="CENTER"/>
+            
+            <!-- 甘特图区域 -->
+            <VBox fx:id="ganttArea" 
+                  styleClass="gantt-container"
+                  layoutX="330.0" 
+                  layoutY="20.0"
+                  prefWidth="880.0"
+                  prefHeight="450.0"/>
+        </Pane>
+    </VBox>
+    
+    <!-- 控制按钮区域 -->
+    <HBox spacing="15" 
+          alignment="CENTER">
+        <Button fx:id="btnStart" text="▶️ 开始调度" onAction="#handleStart" prefWidth="120" prefHeight="45" styleClass="control-button"/>
+        <Button fx:id="btnPause" text="⏸️ 暂停" onAction="#handlePause" prefWidth="120" prefHeight="45" styleClass="control-button"/>
+        <Button fx:id="btnReset" text="🔄 重置" onAction="#handleReset" prefWidth="120" prefHeight="45" styleClass="control-button"/>
+        <Button text="返回主菜单" onAction="#handleBackToMain" prefWidth="130" prefHeight="45" styleClass="back-button"/>
+    </HBox>
+    
+    <!-- 性能统计 -->
+    <HBox spacing="30" 
+          alignment="CENTER"
+          styleClass="stats-section">
+        <VBox alignment="CENTER" spacing="3" styleClass="stat-item">
+            <Label text="📊 平均等待时间：" styleClass="stat-label"/>
+            <Label fx:id="lblAvgWaitTime" text="-- ms" styleClass="stat-value"/>
+        </VBox>
+        <VBox alignment="CENTER" spacing="3" styleClass="stat-item">
+            <Label text="📈 平均周转时间：" styleClass="stat-label"/>
+            <Label fx:id="lblAvgTurnaroundTime" text="-- ms" styleClass="stat-value"/>
+        </VBox>
+        <VBox alignment="CENTER" spacing="3" styleClass="stat-item">
+            <Label text="⚡ CPU 利用率：" styleClass="stat-label"/>
+            <Label fx:id="lblCpuUsage" text="--%" styleClass="stat-value"/>
+        </VBox>
+    </HBox>
+    
+    <!-- 作者信息 -->
+    <VBox spacing="3" alignment="CENTER">
+        <Label text="姓名：谢云轩" styleClass="author-label"/>
+        <Label text="学号：632307060623" styleClass="author-label"/>
+    </VBox>
+    
+</VBox>

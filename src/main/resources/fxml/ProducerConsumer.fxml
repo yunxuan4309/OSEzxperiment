@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Button?>
+<?import javafx.geometry.Insets?>
+<?import javafx.geometry.Pos?>
+
+<VBox xmlns="http://javafx.com/javafx/17.0.6" 
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.homework.osexperiment.osexp.controller.ProducerConsumerController"
+      spacing="15"
+      alignment="CENTER"
+      styleClass="experiment-container">
+    
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+    
+    <!-- 标题 -->
+    <Label text="实验二：生产者与消费者问题" 
+           styleClass="experiment-title-label"/>
+    
+    <!-- 实验说明区域 -->
+    <VBox spacing="8" 
+          styleClass="info-box"
+          maxWidth="650">
+        <Label text="📋 实验说明：" styleClass="info-title"/>
+        <HBox spacing="30" alignment="CENTER_LEFT">
+            <Label text="🏭 生产者（红球）：" styleClass="info-highlight"/>
+            <Label text="随机速度生产产品，缓冲区满时等待" wrapText="true" styleClass="info-text"/>
+        </HBox>
+        <HBox spacing="30" alignment="CENTER_LEFT">
+            <Label text="🛒 消费者（蓝球）：" styleClass="info-highlight"/>
+            <Label text="随机速度消费产品，缓冲区空时等待" wrapText="true" styleClass="info-text"/>
+        </HBox>
+        <HBox spacing="30" alignment="CENTER_LEFT">
+            <Label text="🔒 互斥性：" styleClass="info-highlight"/>
+            <Label text="缓冲区同时只允许一个角色访问，红色边框表示正在使用" wrapText="true" styleClass="info-text"/>
+        </HBox>
+        <HBox spacing="30" alignment="CENTER_LEFT">
+            <Label text="⚡ 随机速度：" styleClass="info-highlight"/>
+            <Label text="实时显示生产和消费的随机速度变化" wrapText="true" styleClass="info-text"/>
+        </HBox>
+    </VBox>
+    
+    <!-- 实时状态显示 -->
+    <HBox spacing="20" 
+          alignment="CENTER"
+          styleClass="status-bar"
+          maxWidth="650">
+        <VBox alignment="CENTER" spacing="5" styleClass="status-item">
+            <Label fx:id="lblBufferStatus" text="📦 缓冲区：0/5" styleClass="status-label"/>
+            <Label fx:id="lblBufferLock" text="🔓 未锁定" styleClass="lock-label"/>
+        </VBox>
+        <VBox alignment="CENTER" spacing="5" styleClass="status-separator">
+            <Label text="|" styleClass="separator-label"/>
+        </VBox>
+        <VBox alignment="CENTER" spacing="5" styleClass="status-item">
+            <Label fx:id="lblProducerStatus" text="🏭 生产者：待机" styleClass="status-label"/>
+            <Label fx:id="lblLastProduct" text="最后生产：无" styleClass="speed-label"/>
+        </VBox>
+        <VBox alignment="CENTER" spacing="5" styleClass="status-separator">
+            <Label text="|" styleClass="separator-label"/>
+        </VBox>
+        <VBox alignment="CENTER" spacing="5" styleClass="status-item">
+            <Label fx:id="lblConsumerStatus" text="🛒 消费者：待机" styleClass="status-label"/>
+            <Label fx:id="lblLastConsume" text="最后消费：无" styleClass="speed-label"/>
+        </VBox>
+    </HBox>
+    
+    <!-- 画布区域 - 用于显示动画 -->
+    <VBox fx:id="canvasContainer"
+          styleClass="canvas-container"
+          prefWidth="700"
+          prefHeight="350"
+          alignment="CENTER">
+        <!-- 动态内容区 - 生产者在左，缓冲区在中，消费者在右 -->
+        <Pane fx:id="animationArea" 
+              styleClass="animation-area"
+              prefWidth="680"
+              prefHeight="290">
+            <!-- 生产者（左侧） -->
+            <VBox fx:id="producerArea" 
+                  styleClass="producer-container"
+                  layoutX="50.0" 
+                  layoutY="20.0"
+                  prefWidth="150.0"
+                  prefHeight="250.0"
+                  alignment="CENTER">
+                <Label text="🏭 生产者" styleClass="area-title-label"/>
+                <Label text="(左侧)" styleClass="area-subtitle-label"/>
+                <Label text="红色区域" styleClass="area-info-label"/>
+            </VBox>
+            
+            <!-- 缓冲区可视化（中间） -->
+            <VBox fx:id="bufferVisual" 
+                  styleClass="buffer-container"
+                  layoutX="290.0" 
+                  layoutY="20.0"
+                  prefWidth="100.0"
+                  prefHeight="250.0"/>
+            
+            <!-- 消费者（右侧） -->
+            <VBox fx:id="consumerArea" 
+                  styleClass="consumer-container"
+                  layoutX="530.0" 
+                  layoutY="20.0"
+                  prefWidth="150.0"
+                  prefHeight="250.0"
+                  alignment="CENTER">
+                <Label text="🛒 消费者" styleClass="area-title-label"/>
+                <Label text="(右侧)" styleClass="area-subtitle-label"/>
+                <Label text="蓝色区域" styleClass="area-info-label"/>
+            </VBox>
+        </Pane>
+    </VBox>
+    
+    <!-- 手动控制按钮区域 -->
+    <HBox spacing="30" 
+          alignment="CENTER">
+        <Button fx:id="btnProduce" text="▶️ 开始生产" onAction="#handleStartProduce" prefWidth="150" prefHeight="45" styleClass="manual-button producer-btn"/>
+        <Button fx:id="btnConsume" text="▶️ 开始消费" onAction="#handleStartConsume" prefWidth="150" prefHeight="45" styleClass="manual-button consumer-btn"/>
+    </HBox>
+    
+    <!-- 控制按钮区域 -->
+    <HBox spacing="15" 
+          alignment="CENTER">
+        <Button fx:id="btnStart" text="▶️ 开始实验" onAction="#handleStart" prefWidth="110" prefHeight="40" styleClass="control-button"/>
+        <Button fx:id="btnPause" text="⏸️ 暂停" onAction="#handlePause" prefWidth="110" prefHeight="40" styleClass="control-button"/>
+        <Button fx:id="btnReset" text="🔄 重置" onAction="#handleReset" prefWidth="110" prefHeight="40" styleClass="control-button"/>
+        <Button text="返回主菜单" onAction="#handleBackToMain" prefWidth="120" prefHeight="40" styleClass="back-button"/>
+    </HBox>
+    
+    <!-- 作者信息 -->
+    <VBox spacing="3" alignment="CENTER">
+        <Label text="姓名：谢云轩" styleClass="author-label"/>
+        <Label text="学号：632307060623" styleClass="author-label"/>
+    </VBox>
+    
+</VBox>

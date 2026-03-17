@@ -1,0 +1,473 @@
+/* 主容器样式 */
+.main-container {
+    -fx-background-color: linear-gradient(to bottom, #667eea 0%, #764ba2 100%);
+}
+
+/* 实验容器样式 */
+.experiment-container {
+    -fx-background-color: linear-gradient(to bottom, #f093fb 0%, #f5576c 100%);
+}
+
+/* 标题标签样式 */
+.title-label {
+    -fx-font-size: 36px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 10, 0.5, 0, 2);
+}
+
+/* 副标题标签样式 */
+.subtitle-label {
+    -fx-font-size: 20px;
+    -fx-text-fill: #e0e0e0;
+}
+
+/* 实验标题标签样式 */
+.experiment-title-label {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 8, 0.5, 0, 2);
+}
+
+/* 实验按钮样式 */
+.experiment-button {
+    -fx-background-color: linear-gradient(to right, #667eea, #764ba2);
+    -fx-text-fill: white;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-border-radius: 25;
+    -fx-background-radius: 25;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 10, 0.5, 0, 2);
+}
+
+.experiment-button:hover {
+    -fx-background-color: linear-gradient(to right, #764ba2, #667eea);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 15, 0.5, 0, 3);
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+}
+
+.experiment-button:pressed {
+    -fx-background-color: linear-gradient(to right, #5a6fd6, #6a4190);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 5, 0.5, 0, 1);
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+}
+
+/* 返回按钮样式 */
+.back-button {
+    -fx-background-color: linear-gradient(to right, #f093fb, #f5576c);
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 8, 0.5, 0, 2);
+}
+
+.back-button:hover {
+    -fx-background-color: linear-gradient(to right, #f5576c, #f093fb);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 12, 0.5, 0, 2);
+}
+
+.back-button:pressed {
+    -fx-background-color: linear-gradient(to right, #e085e8, #e0485d);
+}
+
+/* 画布容器样式 */
+.canvas-container {
+    -fx-background-color: rgba(255, 255, 255, 0.95);
+    -fx-border-radius: 15;
+    -fx-background-radius: 15;
+    -fx-border-color: rgba(255, 255, 255, 0.5);
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 15, 0.5, 0, 2);
+}
+
+/* 动画区域样式 */
+.animation-area {
+    -fx-background-color: #f8f9fa;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-border-color: #dee2e6;
+    -fx-border-width: 1;
+}
+
+/* 信息框样式 */
+.info-box {
+    -fx-background-color: rgba(255, 255, 255, 0.9);
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 15;
+    -fx-border-color: rgba(255, 255, 255, 0.7);
+    -fx-border-width: 1;
+}
+
+/* 信息标题样式 */
+.info-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #667eea;
+}
+
+/* 信息文本样式 */
+.info-text {
+    -fx-font-size: 13px;
+    -fx-text-fill: #333;
+}
+
+/* 高亮信息样式 */
+.info-highlight {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #764ba2;
+}
+
+/* 状态栏样式 */
+.status-bar {
+    -fx-background-color: rgba(255, 255, 255, 0.85);
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 10;
+    -fx-border-color: rgba(102, 126, 234, 0.3);
+    -fx-border-width: 1;
+}
+
+/* 状态标签样式 */
+.status-label {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #5a5a5a;
+}
+
+/* 控制面板样式 */
+.control-panel {
+    -fx-background-color: rgba(255, 255, 255, 0.8);
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 10;
+}
+
+/* 进程复选框样式 */
+.process-checkbox {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333;
+}
+
+/* 控制按钮样式 */
+.control-button {
+    -fx-background-color: linear-gradient(to right, #667eea, #764ba2);
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 8, 0.5, 0, 2);
+}
+
+.control-button:hover {
+    -fx-background-color: linear-gradient(to right, #764ba2, #667eea);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 12, 0.5, 0, 2);
+}
+
+.control-button:pressed {
+    -fx-background-color: linear-gradient(to right, #5a6fd6, #6a4190);
+}
+
+.control-button:disabled {
+    -fx-opacity: 0.5;
+    -fx-cursor: default;
+}
+
+/* 缓冲区容器样式 */
+.buffer-container {
+    -fx-background-color: rgba(255, 255, 255, 0.8);
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-border-color: #dee2e6;
+    -fx-border-width: 2;
+}
+
+/* 状态项样式 */
+.status-item {
+    -fx-padding: 5px;
+}
+
+/* 状态分隔符样式 */
+.status-separator {
+    -fx-padding: 0 10px;
+}
+
+/* 分隔符标签样式 */
+.separator-label {
+    -fx-font-size: 18px;
+    -fx-text-fill: #ccc;
+}
+
+/* 速度标签样式 */
+.speed-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #667eea;
+    -fx-font-weight: bold;
+}
+
+/* 锁定状态标签样式 */
+.lock-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #f5576c;
+}
+
+/* 手动控制按钮样式 */
+.manual-button {
+    -fx-background-color: linear-gradient(to right, #667eea, #764ba2);
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 8, 0.5, 0, 2);
+}
+
+.manual-button:hover {
+    -fx-background-color: linear-gradient(to right, #764ba2, #667eea);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 12, 0.5, 0, 2);
+}
+
+.manual-button:pressed {
+    -fx-background-color: linear-gradient(to right, #5a6fd6, #6a4190);
+}
+
+.manual-button:disabled {
+    -fx-opacity: 0.4;
+    -fx-cursor: default;
+}
+
+/* 生产者按钮特殊颜色 */
+.producer-btn {
+    -fx-background-color: linear-gradient(to right, #f093fb, #f5576c);
+}
+
+.producer-btn:hover {
+    -fx-background-color: linear-gradient(to right, #f5576c, #f093fb);
+}
+
+/* 消费者按钮特殊颜色 */
+.consumer-btn {
+    -fx-background-color: linear-gradient(to right, #4facfe, #00f2fe);
+}
+
+.consumer-btn:hover {
+    -fx-background-color: linear-gradient(to right, #00f2fe, #4facfe);
+}
+
+/* 生产者区域样式 */
+.producer-container {
+    -fx-background-color: rgba(245, 87, 108, 0.1);
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(245, 87, 108, 0.3);
+    -fx-border-width: 2;
+}
+
+/* 消费者区域样式 */
+.consumer-container {
+    -fx-background-color: rgba(79, 172, 254, 0.1);
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(79, 172, 254, 0.3);
+    -fx-border-width: 2;
+}
+
+/* 区域标题标签样式 */
+.area-title-label {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333;
+}
+
+/* 区域副标题标签样式 */
+.area-subtitle-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #666;
+}
+
+/* 区域信息标签样式 */
+.area-info-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #999;
+}
+
+/* ==================== 实验三：进程调度样式 ==================== */
+
+/* 配置区域样式 */
+.config-section {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-padding: 15;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 8, 0.3, 0, 2);
+}
+
+/* 区域标题样式 */
+.section-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333;
+}
+
+/* 算法单选按钮样式 */
+.algorithm-radio {
+    -fx-font-size: 14px;
+    -fx-text-fill: #555;
+}
+
+/* 小标签样式 */
+.small-label {
+    -fx-font-size: 13px;
+    -fx-text-fill: #666;
+}
+
+/* 时间 Spinner 样式 */
+.time-spinner {
+    -fx-background-color: white;
+    -fx-border-color: #ddd;
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
+}
+
+/* 进程输入框样式 */
+.process-input {
+    -fx-background-color: white;
+    -fx-border-color: #ddd;
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
+    -fx-alignment: center;
+}
+
+/* 优先级下拉框样式 */
+.priority-combo {
+    -fx-background-color: white;
+    -fx-border-color: #ddd;
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
+}
+
+/* 添加按钮样式 */
+.add-button {
+    -fx-background-color: linear-gradient(to right, #667eea, #764ba2);
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+
+.add-button:hover {
+    -fx-background-color: linear-gradient(to right, #764ba2, #667eea);
+}
+
+/* 清空按钮样式 */
+.clear-button {
+    -fx-background-color: linear-gradient(to right, #f093fb, #f5576c);
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+
+.clear-button:hover {
+    -fx-background-color: linear-gradient(to right, #f5576c, #f093fb);
+}
+
+/* RR 算法信息框样式 */
+.rr-info-box {
+    -fx-background-color: rgba(255, 255, 255, 0.9);
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 8 12;
+    -fx-border-color: rgba(102, 126, 234, 0.3);
+    -fx-border-width: 1;
+}
+
+/* RR 算法信息标签样式 */
+.rr-info-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #667eea;
+}
+
+/* 队列区域样式 */
+.queue-section {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-padding: 15;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 8, 0.3, 0, 2);
+}
+
+/* 就绪队列容器样式 */
+.ready-queue {
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: #dee2e6;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 10;
+}
+
+/* CPU 容器样式 */
+.cpu-container {
+    -fx-background-color: rgba(102, 126, 234, 0.1);
+    -fx-border-radius: 15;
+    -fx-background-radius: 15;
+    -fx-border-color: rgba(102, 126, 234, 0.3);
+    -fx-border-width: 3;
+}
+
+/* 甘特图容器样式 */
+.gantt-container {
+    -fx-background-color: white;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-border-color: #dee2e6;
+    -fx-border-width: 2;
+}
+
+/* 统计区域样式 */
+.stats-section {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-padding: 15;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 8, 0.3, 0, 2);
+}
+
+/* 统计项样式 */
+.stat-item {
+    -fx-alignment: center;
+}
+
+/* 统计标签样式 */
+.stat-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #666;
+}
+
+/* 统计值样式 */
+.stat-value {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #667eea;
+}
+
+/* 作者信息标签样式 */
+.author-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #666;
+    -fx-font-style: italic;
+}

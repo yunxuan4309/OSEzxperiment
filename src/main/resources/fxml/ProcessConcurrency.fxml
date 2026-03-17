@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.geometry.Insets?>
+<?import javafx.geometry.Pos?>
+
+<VBox xmlns="http://javafx.com/javafx/17.0.6" 
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.homework.osexperiment.osexp.controller.ProcessConcurrencyController"
+      spacing="15"
+      alignment="CENTER"
+      styleClass="experiment-container">
+    
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+    
+    <!-- 标题 -->
+    <Label text="实验一：进程并发模拟" 
+           styleClass="experiment-title-label"/>
+    
+    <!-- 实验说明区域 -->
+    <VBox spacing="8" 
+          styleClass="info-box"
+          maxWidth="650">
+        <Label text="📋 实验说明：" styleClass="info-title"/>
+        <Label text="🔴 红色小球 - 进程 A（打印任务）：独立运行，匀速运动，不受其他进程影响" wrapText="true" styleClass="info-text"/>
+        <Label text="🔵 蓝色小球 - 进程 B（计算任务）：独立运行，匀速运动，不受其他进程影响" wrapText="true" styleClass="info-text"/>
+        <Label text="🟢🟡🟣 绿/黄/紫小球 - 进程 C/D/E（网络任务）：共享网络带宽，速度可变" wrapText="true" styleClass="info-text"/>
+        <HBox spacing="30" alignment="CENTER_LEFT">
+            <Label text="💡 随机性：" styleClass="info-highlight"/>
+            <Label text="每个小球偶尔会随机停顿，模拟进程执行的间断性" wrapText="true" styleClass="info-text"/>
+        </HBox>
+        <HBox spacing="30" alignment="CENTER_LEFT">
+            <Label text="🌐 资源占用：" styleClass="info-highlight"/>
+            <Label text="网络进程越多，每个进程分得的带宽越少，速度越慢！" wrapText="true" styleClass="info-text"/>
+        </HBox>
+    </VBox>
+    
+    <!-- 实时状态显示 -->
+    <HBox spacing="30" 
+          alignment="CENTER"
+          styleClass="status-bar"
+          maxWidth="650">
+        <Label fx:id="lblNetworkStatus" text="🌐 网络带宽占用：0/3" styleClass="status-label"/>
+        <Label fx:id="lblSpeedStatus" text="⚡ 网络进程速度：--" styleClass="status-label"/>
+    </HBox>
+    
+    <!-- 画布区域 - 用于显示进程动画 -->
+    <VBox fx:id="canvasContainer"
+          styleClass="canvas-container"
+          prefWidth="700"
+          prefHeight="320"
+          alignment="CENTER">
+        <!-- 动态内容区 - 使用 Pane 来容纳小球 -->
+        <Pane fx:id="animationArea" 
+              styleClass="animation-area"
+              prefWidth="680"
+              prefHeight="260"/>
+    </VBox>
+    
+    <!-- 进程控制复选框 -->
+    <HBox spacing="20" 
+          alignment="CENTER"
+          styleClass="control-panel">
+        <CheckBox fx:id="chkProcessA" text="🔴 进程 A (打印)" selected="true" styleClass="process-checkbox"/>
+        <CheckBox fx:id="chkProcessB" text="🔵 进程 B (计算)" selected="true" styleClass="process-checkbox"/>
+        <CheckBox fx:id="chkProcessC" text="🟢 进程 C (网络 1)" selected="true" styleClass="process-checkbox"/>
+        <CheckBox fx:id="chkProcessD" text="🟡 进程 D (网络 2)" selected="true" styleClass="process-checkbox"/>
+        <CheckBox fx:id="chkProcessE" text="🟣 进程 E (网络 3)" selected="true" styleClass="process-checkbox"/>
+    </HBox>
+    
+    <!-- 控制按钮区域 -->
+    <HBox spacing="15" 
+          alignment="CENTER">
+        <Button fx:id="btnStart" text="▶️ 开始" onAction="#handleStart" prefWidth="100" prefHeight="40" styleClass="control-button"/>
+        <Button fx:id="btnPause" text="⏸️ 暂停" onAction="#handlePause" prefWidth="100" prefHeight="40" styleClass="control-button"/>
+        <Button fx:id="btnReset" text="🔄 重置" onAction="#handleReset" prefWidth="100" prefHeight="40" styleClass="control-button"/>
+        <Button text="返回主菜单" onAction="#handleBackToMain" prefWidth="120" prefHeight="40" styleClass="back-button"/>
+    </HBox>
+    
+    <!-- 作者信息 -->
+    <VBox spacing="3" alignment="CENTER">
+        <Label text="姓名：谢云轩" styleClass="author-label"/>
+        <Label text="学号：632307060623" styleClass="author-label"/>
+    </VBox>
+    
+</VBox>
