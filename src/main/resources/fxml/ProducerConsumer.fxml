@@ -71,6 +71,34 @@
         </VBox>
     </HBox>
     
+    <!-- AND 信号量状态显示区域 -->
+    <VBox spacing="10" 
+          styleClass="info-box"
+          maxWidth="650">
+        <Label text="🔐 AND 信号量状态（实时 PV 操作监控）" styleClass="info-title"/>
+        <HBox spacing="20" alignment="CENTER">
+            <VBox alignment="CENTER" spacing="5" styleClass="semaphore-item">
+                <Label text="🔒 mutex" styleClass="semaphore-name"/>
+                <Label fx:id="lblMutexValue" text="1" styleClass="semaphore-value"/>
+                <Label text="互斥锁" styleClass="semaphore-desc"/>
+            </VBox>
+            <VBox alignment="CENTER" spacing="5" styleClass="semaphore-item">
+                <Label text="📭 empty" styleClass="semaphore-name"/>
+                <Label fx:id="lblEmptyValue" text="5" styleClass="semaphore-value"/>
+                <Label text="空缓冲区" styleClass="semaphore-desc"/>
+            </VBox>
+            <VBox alignment="CENTER" spacing="5" styleClass="semaphore-item">
+                <Label text="📮 full" styleClass="semaphore-name"/>
+                <Label fx:id="lblFullValue" text="0" styleClass="semaphore-value"/>
+                <Label text="满缓冲区" styleClass="semaphore-desc"/>
+            </VBox>
+        </HBox>
+        <Label fx:id="lblPVOperation" text="⏸️ 等待操作..." 
+               styleClass="pv-operation-label"
+               wrapText="true"
+               maxWidth="630"/>
+    </VBox>
+    
     <!-- 画布区域 - 用于显示动画 -->
     <VBox fx:id="canvasContainer"
           styleClass="canvas-container"

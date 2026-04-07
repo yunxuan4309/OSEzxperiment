@@ -471,3 +471,45 @@
     -fx-text-fill: #666;
     -fx-font-style: italic;
 }
+
+/* ==================== AND 信号量显示样式 ==================== */
+
+/* 信号量项样式 */
+.semaphore-item {
+    -fx-padding: 10;
+    -fx-background-color: linear-gradient(to bottom, #f8f9fa, #e9ecef);
+    -fx-background-radius: 8;
+    -fx-border-color: #dee2e6;
+    -fx-border-radius: 8;
+    -fx-min-width: 120;
+}
+
+/* 信号量名称样式 */
+.semaphore-name {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #495057;
+}
+
+/* 信号量值样式 */
+.semaphore-value {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #007bff;
+}
+
+/* 信号量描述样式 */
+.semaphore-desc {
+    -fx-font-size: 11px;
+    -fx-text-fill: #6c757d;
+}
+
+/* PV 操作日志标签样式 */
+.pv-operation-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #28a745;
+    -fx-font-family: "Consolas", "Courier New", monospace;
+    -fx-padding: 5;
+    -fx-background-color: #f0fff0;
+    -fx-background-radius: 5;
+}

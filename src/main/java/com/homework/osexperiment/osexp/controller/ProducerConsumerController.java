@@ -51,6 +51,18 @@ public class ProducerConsumerController {
     private Label lblLastConsume;
     
     @FXML
+    private Label lblMutexValue;
+    
+    @FXML
+    private Label lblEmptyValue;
+    
+    @FXML
+    private Label lblFullValue;
+    
+    @FXML
+    private Label lblPVOperation;
+    
+    @FXML
     private Button btnStart;
     
     @FXML
@@ -76,8 +88,12 @@ public class ProducerConsumerController {
     private AnimationTimer animationTimer;
     
     // 运行状态
-    private boolean isProducing = false;  // 是否正在生产
-    private boolean isConsuming = false;  // 是否正在消费
+    private volatile boolean isProducing = false;  // 是否正在生产
+    private volatile boolean isConsuming = false;  // 是否正在消费
+    
+    // 生产者线程和消费者线程
+    private Thread producerThread;
+    private Thread consumerThread;
     
     /**
      * 初始化方法
@@ -128,6 +144,7 @@ public class ProducerConsumerController {
         
         // 更新状态显示
         updateStatusDisplay();
+        updateSemaphoreDisplay();
     }
     
     /**
@@ -137,105 +154,107 @@ public class ProducerConsumerController {
         animationTimer = new AnimationTimer() {
             @Override
             public void handle(long now) {
-                // 如果正在生产，自动生产产品
-                if (isProducing) {
-                    autoProduce();
-                }
-                // 如果正在消费，自动消费产品
-                if (isConsuming) {
-                    autoConsume();
-                }
                 // 更新缓冲区可视化
                 updateBufferVisual();
+                // 更新信号量显示
+                updateSemaphoreDisplay();
             }
         };
     }
     
     /**
-     * 自动生产（由动画计时器调用）
+     * 更新信号量显示
      */
-    private void autoProduce() {
-        // 检查缓冲区是否已满
-        if (buffer.isFull()) {
-            System.out.println("[提示] 缓冲区已满，停止生产");
-            stopProduce();
-            lblProducerStatus.setText("⚠️ 缓冲区已满，已停止");
-            return;
-        }
-        
-        // 尝试获取锁（如果消费者正在使用，则等待）
-        if (buffer.isLocked() && buffer.getLockedBy().contains("消费者")) {
-            lblProducerStatus.setText("⏳ 等待锁（消费者使用中）...");
-            return;
-        }
-        
-        // 生产产品
-        productCounter++;
-        lastProductInfo = "产品 #" + productCounter;
-        Product product = new Product(productCounter, "产品 #" + productCounter);
-        
-        if (buffer.produce(product)) {
-            System.out.println("[成功] 生产了 " + lastProductInfo);
-            lblProducerStatus.setText("✅ 生产中..." + lastProductInfo);
-            lblLastProduct.setText("最后生产：" + lastProductInfo);
-            
-            // 添加生产者小球
-            addProducerBall(productCounter);
-            
-            // 延迟后移除生产者小球并添加到缓冲区
-            javafx.application.Platform.runLater(() -> {
-                javafx.animation.PauseTransition delay = new javafx.animation.PauseTransition(javafx.util.Duration.millis(300));
-                delay.setOnFinished(e -> {
-                    removeProducerBall();
-                });
-                delay.play();
-            });
-        }
-        
-        // 暂停一下再生产（模拟生产时间）
-        try {
-            Thread.sleep(800); // 0.8 秒生产一个
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+    private void updateSemaphoreDisplay() {
+        if (buffer != null && lblMutexValue != null) {
+            lblMutexValue.setText(String.valueOf(buffer.getMutexValue()));
+            lblEmptyValue.setText(String.valueOf(buffer.getEmptyValue()));
+            lblFullValue.setText(String.valueOf(buffer.getFullValue()));
         }
     }
     
     /**
-     * 自动消费（由动画计时器调用）
+     * 更新 PV 操作日志
      */
-    private void autoConsume() {
-        // 检查缓冲区是否为空
-        if (buffer.isEmpty()) {
-            System.out.println("[提示] 缓冲区为空，停止消费");
-            stopConsume();
-            lblConsumerStatus.setText("⚠️ 缓冲区为空，已停止");
-            return;
+    private void updatePVOperationLog(String message) {
+        if (lblPVOperation != null) {
+            javafx.application.Platform.runLater(() -> {
+                lblPVOperation.setText(message);
+            });
         }
-        
-        // 尝试获取锁（如果生产者正在使用，则等待）
-        if (buffer.isLocked() && buffer.getLockedBy().contains("生产者")) {
-            lblConsumerStatus.setText("⏳ 等待锁（生产者使用中）...");
-            return;
-        }
-        
-        // 消费产品
-        Product product = buffer.consume();
-        if (product != null) {
-            lastConsumeInfo = "产品 #" + product.getId();
-            System.out.println("[成功] 消费了 " + lastConsumeInfo);
-            lblConsumerStatus.setText("✅ 消费中..." + lastConsumeInfo);
-            lblLastConsume.setText("最后消费：" + lastConsumeInfo);
-            
-            // 添加消费者小球
-            addConsumerBall(product.getId());
-        }
-        
-        // 暂停一下再消费（模拟消费时间）
-        try {
-            Thread.sleep(1000); // 1 秒消费一个
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+    }
+    
+    /**
+     * 生产者线程任务
+     */
+    private Runnable createProducerTask() {
+        return () -> {
+            try {
+                while (isProducing && !Thread.currentThread().isInterrupted()) {
+                    // 生成产品
+                    productCounter++;
+                    Product product = new Product(productCounter, "产品 #" + productCounter);
+                    lastProductInfo = "产品 #" + productCounter;
+                    
+                    // 执行生产（包含 AND 信号量的 P/V 操作）
+                    updatePVOperationLog("🔄 生产者执行: Swait(empty, mutex) → 生产 → Ssignal(mutex, full)");
+                    buffer.produce(product);
+                    
+                    // 更新 UI
+                    javafx.application.Platform.runLater(() -> {
+                        lblLastProduct.setText("最后生产：" + lastProductInfo);
+                        lblProducerStatus.setText("✅ 已生产 " + lastProductInfo);
+                        addProducerBall(productCounter);
+                        
+                        // 延迟后移除生产者小球
+                        javafx.animation.PauseTransition delay = new javafx.animation.PauseTransition(
+                            javafx.util.Duration.millis(500)
+                        );
+                        delay.setOnFinished(e -> removeProducerBall());
+                        delay.play();
+                    });
+                    
+                    // 随机延迟模拟生产时间（300-800ms）
+                    Thread.sleep(300 + (int)(Math.random() * 500));
+                }
+            } catch (InterruptedException e) {
+                System.out.println("[调试] 生产者线程被中断");
+                Thread.currentThread().interrupt();
+            }
+        };
+    }
+    
+    /**
+     * 消费者线程任务
+     */
+    private Runnable createConsumerTask() {
+        return () -> {
+            try {
+                while (isConsuming && !Thread.currentThread().isInterrupted()) {
+                    // 执行消费（包含 AND 信号量的 P/V 操作）
+                    // 如果缓冲区为空，swait 会自动阻塞等待
+                    updatePVOperationLog("🔄 消费者执行: Swait(full, mutex) → 消费 → Ssignal(mutex, empty)");
+                    Product product = buffer.consume();
+                    
+                    if (product != null) {
+                        lastConsumeInfo = "产品 #" + product.getId();
+                        
+                        // 更新 UI
+                        javafx.application.Platform.runLater(() -> {
+                            lblLastConsume.setText("最后消费：" + lastConsumeInfo);
+                            lblConsumerStatus.setText("✅ 已消费 " + lastConsumeInfo);
+                            addConsumerBall(product.getId());
+                        });
+                    }
+                    
+                    // 随机延迟模拟消费时间（400-1000ms）
+                    Thread.sleep(400 + (int)(Math.random() * 600));
+                }
+            } catch (InterruptedException e) {
+                System.out.println("[调试] 消费者线程被中断");
+                Thread.currentThread().interrupt();
+            }
+        };
     }
     
     /**
@@ -243,8 +262,18 @@ public class ProducerConsumerController {
      */
     private void stopProduce() {
         isProducing = false;
+        if (producerThread != null && producerThread.isAlive()) {
+            producerThread.interrupt();
+            try {
+                producerThread.join(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
         btnProduce.setText("▶️ 开始生产");
         btnProduce.setStyle("-fx-background-color: linear-gradient(to right, #f093fb, #f5576c);");
+        lblProducerStatus.setText("🛑 已停止生产");
+        updatePVOperationLog("⏹️ 生产者已停止");
     }
     
     /**
@@ -252,9 +281,41 @@ public class ProducerConsumerController {
      */
     private void stopConsume() {
         isConsuming = false;
+        if (consumerThread != null && consumerThread.isAlive()) {
+            consumerThread.interrupt();
+            try {
+                consumerThread.join(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
         btnConsume.setText("▶️ 开始消费");
         btnConsume.setStyle("-fx-background-color: linear-gradient(to right, #4facfe, #00f2fe);");
+        lblConsumerStatus.setText("🛑 已停止消费");
+        updatePVOperationLog("⏹️ 消费者已停止");
     }
+    /**
+     * 更新状态显示
+     */
+    private void updateStatusDisplay() {
+        // 更新缓冲区状态
+        lblBufferStatus.setText("📦 缓冲区：" + buffer.size() + "/" + buffer.getCapacity());
+        
+        // 更新生产者状态
+        lblProducerStatus.setText("🏭 生产者：待机");
+        lblLastProduct.setText("最后生产：" + lastProductInfo);
+        
+        // 更新消费者状态
+        lblConsumerStatus.setText("🛒 消费者：待机");
+        lblLastConsume.setText("最后消费：" + lastConsumeInfo);
+        
+        // 更新缓冲区可视化
+        updateBufferVisual();
+    }
+    
+    /**
+     * 更新缓冲区可视化显示
+     */
     private void updateBufferVisual() {
         // 清空现有显示
         bufferVisual.getChildren().clear();
@@ -270,16 +331,18 @@ public class ProducerConsumerController {
             bufferVisual.getChildren().add(productCircle);
         }
         
-        // 更新锁定状态显示
-        if (buffer.isLocked()) {
-            String lockedBy = buffer.getLockedBy();
-            if (lockedBy.contains("生产者")) {
+        // 根据信号量状态更新边框颜色
+        if (buffer.getMutexValue() == 0) {
+            // mutex=0 表示有进程在临界区
+            if (buffer.getEmptyValue() < buffer.getCapacity()) {
+                // 生产者在使用
                 bufferVisual.setStyle("-fx-border-color: red; -fx-border-width: 3; -fx-border-radius: 10; -fx-background-radius: 10;");
-                lblBufferLock.setText("🔒 生产者使用中");
+                lblBufferLock.setText("🔒 生产者临界区");
                 lblBufferLock.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
             } else {
+                // 消费者在使用
                 bufferVisual.setStyle("-fx-border-color: blue; -fx-border-width: 3; -fx-border-radius: 10; -fx-background-radius: 10;");
-                lblBufferLock.setText("🔒 消费者使用中");
+                lblBufferLock.setText("🔒 消费者临界区");
                 lblBufferLock.setStyle("-fx-text-fill: blue; -fx-font-weight: bold;");
             }
         } else {
@@ -337,29 +400,6 @@ public class ProducerConsumerController {
         ballWithLabel.getChildren().addAll(circle, lblId);
         consumerBallContainer.getChildren().add(ballWithLabel);
     }
-    
-    /**
-     * 更新状态显示
-     */
-    private void updateStatusDisplay() {
-        // 更新缓冲区状态
-        lblBufferStatus.setText("📦 缓冲区：" + buffer.size() + "/" + buffer.getCapacity());
-        
-        // 更新生产者状态
-        lblProducerStatus.setText("🏭 生产者：待机");
-        lblLastProduct.setText("最后生产：" + lastProductInfo);
-        
-        // 更新消费者状态
-        lblConsumerStatus.setText("🛒 消费者：待机");
-        lblLastConsume.setText("最后消费：" + lastConsumeInfo);
-        
-        // 更新缓冲区可视化
-        updateBufferVisual();
-    }
-    
-    /**
-     * 更新缓冲区可视化显示
-     */
     /**
      * 开始生产按钮处理
      */
@@ -374,15 +414,19 @@ public class ProducerConsumerController {
         
         // 切换生产状态
         if (isProducing) {
-            // 正在生产中，点击后停止
             stopProduce();
-            lblProducerStatus.setText("🛑 已停止生产");
         } else {
-            // 开始生产
             isProducing = true;
             btnProduce.setText("⏹️ 停止生产");
             btnProduce.setStyle("-fx-background-color: linear-gradient(to right, #ff6b6b, #ee5a6f);");
-            lblProducerStatus.setText("▶️ 开始生产...");
+            lblProducerStatus.setText("▶️ 启动生产者线程...");
+            
+            // 创建并启动生产者线程
+            producerThread = new Thread(createProducerTask(), "Producer-Thread");
+            producerThread.setDaemon(true);
+            producerThread.start();
+            
+            updatePVOperationLog("🚀 生产者线程已启动，准备执行 Swait 操作");
         }
     }
     
@@ -400,15 +444,19 @@ public class ProducerConsumerController {
         
         // 切换消费状态
         if (isConsuming) {
-            // 正在消费中，点击后停止
             stopConsume();
-            lblConsumerStatus.setText("🛑 已停止消费");
         } else {
-            // 开始消费
             isConsuming = true;
             btnConsume.setText("⏹️ 停止消费");
             btnConsume.setStyle("-fx-background-color: linear-gradient(to right, #45b7d1, #29a3c4);");
-            lblConsumerStatus.setText("▶️ 开始消费...");
+            lblConsumerStatus.setText("▶️ 启动消费者线程...");
+            
+            // 创建并启动消费者线程
+            consumerThread = new Thread(createConsumerTask(), "Consumer-Thread");
+            consumerThread.setDaemon(true);
+            consumerThread.start();
+            
+            updatePVOperationLog("🚀 消费者线程已启动，准备执行 Swait 操作");
         }
     }
     
@@ -491,6 +539,8 @@ public class ProducerConsumerController {
         
         // 更新显示
         updateStatusDisplay();
+        updateSemaphoreDisplay();
+        updatePVOperationLog("🔄 系统已重置，信号量恢复初始状态");
     }
     
     /**

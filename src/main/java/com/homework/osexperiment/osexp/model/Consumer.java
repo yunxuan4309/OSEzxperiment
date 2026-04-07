@@ -7,8 +7,10 @@ import javafx.scene.paint.Color;
  * 消费者类 - 蓝色小球，负责消费产品
  * 
  * @author 谢云轩
- * @version 1.0
+ * @version 2.0 (已废弃，现使用多线程方式)
+ * @deprecated 此类已不再使用，请使用 ProducerConsumerController 中的多线程实现
  */
+@Deprecated
 public class Consumer {
     // 视觉组件
     private Circle circle;
@@ -23,7 +25,6 @@ public class Consumer {
     private boolean isRunning;          // 是否运行中
     private boolean isPaused;           // 是否暂停
     private boolean isWaiting;          // 是否等待（缓冲区空）
-    private boolean hasLock;            // 是否持有锁
     
     // 随机性控制
     private int randomPauseDuration = 0;
@@ -44,7 +45,6 @@ public class Consumer {
         this.isRunning = false;
         this.isPaused = false;
         this.isWaiting = false;
-        this.hasLock = false;
         
         // 创建蓝色小球
         circle = new Circle(20, Color.BLUE);
@@ -88,14 +88,15 @@ public class Consumer {
         isRunning = false;
         isPaused = false;
         isWaiting = false;
-        hasLock = false;
         resetPosition();
     }
     
     /**
-     * 更新位置和状态
+     * 更新位置和状态（已废弃）
      * @param buffer 缓冲区对象
+     * @deprecated 此方法已不再使用
      */
+    @Deprecated
     public void update(Buffer buffer) {
         if (!isRunning || isPaused) return;
         
@@ -114,15 +115,6 @@ public class Consumer {
             isWaiting = false;
         }
         
-        // 尝试获取锁
-        if (!hasLock) {
-            hasLock = buffer.tryLock(name);
-            if (!hasLock) {
-                System.out.println("[调试] " + name + "：未能获取锁，等待...");
-                return;
-            }
-        }
-        
         // 生成随机速度（80% ~ 120% 基础速度）
         currentSpeed = baseSpeed * (0.8 + Math.random() * 0.4);
         
@@ -131,16 +123,18 @@ public class Consumer {
         if (circle.getCenterX() < bufferX - 20) {
             circle.setCenterX(circle.getCenterX() + currentSpeed);
         } else {
-            // 到达缓冲区，消费产品
-            Product product = buffer.consume();
-            if (product != null) {
-                productsConsumed++;
-                System.out.println("[调试] " + name + " 成功消费了产品 #" + product.getId());
+            // 到达缓冲区，消费产品（注意：这里仅用于演示，实际应使用 AND 信号量）
+            try {
+                Product product = buffer.consume();
+                if (product != null) {
+                    productsConsumed++;
+                    System.out.println("[调试] " + name + " 成功消费了产品 #" + product.getId());
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
             
-            // 释放锁并返回起点
-            buffer.unlock();
-            hasLock = false;
+            // 返回起点
             resetPosition();
         }
     }
@@ -174,7 +168,6 @@ public class Consumer {
      */
     public String getStatus() {
         if (isWaiting) return "等待（缓冲区空）";
-        if (hasLock) return "消费中...";
         if (isPaused) return "暂停";
         if (!isRunning) return "待机";
         return "消费中";

@@ -35,7 +35,7 @@
             <version>${javafx.version}</version>
         </dependency>
         
-        <!-- JavaFX 图形模块 (必需) -->
+        <!-- JavaFX 图形模块 -->
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-graphics</artifactId>
@@ -75,7 +75,7 @@
                 </configuration>
             </plugin>
             
-            <!-- Exec Maven Plugin - 用于直接在 IDE 中运行 -->
+            <!-- Exec Maven Plugin -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>

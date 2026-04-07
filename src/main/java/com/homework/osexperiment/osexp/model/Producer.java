@@ -7,8 +7,10 @@ import javafx.scene.paint.Color;
  * 生产者类 - 红色小球，负责生产产品
  * 
  * @author 谢云轩
- * @version 1.0
+ * @version 2.0 (已废弃，现使用多线程方式)
+ * @deprecated 此类已不再使用，请使用 ProducerConsumerController 中的多线程实现
  */
+@Deprecated
 public class Producer {
     // 视觉组件
     private Circle circle;
@@ -23,7 +25,6 @@ public class Producer {
     private boolean isRunning;          // 是否运行中
     private boolean isPaused;           // 是否暂停
     private boolean isWaiting;          // 是否等待（缓冲区满）
-    private boolean hasLock;            // 是否持有锁
     
     // 随机性控制
     private int randomPauseDuration = 0;
@@ -44,7 +45,6 @@ public class Producer {
         this.isRunning = false;
         this.isPaused = false;
         this.isWaiting = false;
-        this.hasLock = false;
         
         // 创建红色小球
         circle = new Circle(20, Color.RED);
@@ -88,14 +88,15 @@ public class Producer {
         isRunning = false;
         isPaused = false;
         isWaiting = false;
-        hasLock = false;
         resetPosition();
     }
     
     /**
-     * 更新位置和状态
+     * 更新位置和状态（已废弃）
      * @param buffer 缓冲区对象
+     * @deprecated 此方法已不再使用
      */
+    @Deprecated
     public void update(Buffer buffer) {
         if (!isRunning || isPaused) return;
         
@@ -114,15 +115,6 @@ public class Producer {
             isWaiting = false;
         }
         
-        // 尝试获取锁
-        if (!hasLock) {
-            hasLock = buffer.tryLock(name);
-            if (!hasLock) {
-                System.out.println("[调试] " + name + "：未能获取锁，等待...");
-                return;
-            }
-        }
-        
         // 生成随机速度（80% ~ 120% 基础速度）
         currentSpeed = baseSpeed * (0.8 + Math.random() * 0.4);
         
@@ -131,15 +123,16 @@ public class Producer {
         if (circle.getCenterX() < bufferX - 20) {
             circle.setCenterX(circle.getCenterX() + currentSpeed);
         } else {
-            // 到达缓冲区，生产产品
+            // 到达缓冲区，生产产品（注意：这里仅用于演示，实际应使用 AND 信号量）
             Product product = new Product(++productsMade, "产品 #" + productsMade);
-            if (buffer.produce(product)) {
+            try {
+                buffer.produce(product);
                 System.out.println("[调试] " + name + " 成功生产了产品 #" + productsMade);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
             
-            // 释放锁并返回起点
-            buffer.unlock();
-            hasLock = false;
+            // 返回起点
             resetPosition();
         }
     }
@@ -173,7 +166,6 @@ public class Producer {
      */
     public String getStatus() {
         if (isWaiting) return "等待（缓冲区满）";
-        if (hasLock) return "生产中...";
         if (isPaused) return "暂停";
         if (!isRunning) return "待机";
         return "生产中";

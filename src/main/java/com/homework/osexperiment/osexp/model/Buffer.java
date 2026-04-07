@@ -4,99 +4,140 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 /**
- * 缓冲区类 - 带锁管理和容量限制
+ * 缓冲区类 - 基于 AND 信号量实现生产者-消费者问题
  * 
  * @author 谢云轩
- * @version 1.0
+ * @version 2.0
  */
 public class Buffer {
-    private Queue<Product> buffer;      // 产品队列
-    private int capacity;               // 容量上限
-    private boolean isLocked;           // 是否被锁定
-    private String lockedBy;            // 被谁锁定（"生产者" 或 "消费者"）
+    private Queue<Product> buffer;
+    private int capacity;
+    private AndSemaphore andSemaphore;
+    
+    // 信号量索引常量
+    private static final int MUTEX_INDEX = 0;  // 互斥信号量
+    private static final int EMPTY_INDEX = 1;  // 空缓冲区信号量
+    private static final int FULL_INDEX = 2;   // 满缓冲区信号量
     
     /**
      * 构造函数
+     * @param capacity 缓冲区容量
      */
     public Buffer(int capacity) {
         this.capacity = capacity;
         this.buffer = new LinkedList<>();
-        this.isLocked = false;
-        this.lockedBy = null;
+        
+        // 初始化 AND 信号量：mutex=1, empty=capacity, full=0
+        int[] permits = {1, capacity, 0};
+        String[] names = {"mutex", "empty", "full"};
+        this.andSemaphore = new AndSemaphore(permits, names);
     }
     
     /**
-     * 尝试获取锁
-     * @param requester 请求者名称
-     * @return 是否成功获取锁
-     */
-    public synchronized boolean tryLock(String requester) {
-        if (!isLocked) {
-            isLocked = true;
-            lockedBy = requester;
-            System.out.println("[调试] " + requester + " 获取了缓冲区锁");
-            return true;
-        }
-        return false;
-    }
-    
-    /**
-     * 释放锁
-     */
-    public synchronized void unlock() {
-        isLocked = false;
-        String locker = lockedBy;
-        lockedBy = null;
-        System.out.println("[调试] " + locker + " 释放了缓冲区锁");
-    }
-    
-    /**
-     * 生产产品（放入缓冲区）
+     * 生产者：生产产品（使用 AND 信号量的 Swait/Ssignal）
      * @param product 产品对象
-     * @return 是否成功生产
+     * @throws InterruptedException 如果线程被中断
      */
-    public synchronized boolean produce(Product product) {
-        if (buffer.size() >= capacity) {
-            System.out.println("[调试] 缓冲区已满，无法生产产品 #" + product.getId());
-            return false;
+    public void produce(Product product) throws InterruptedException {
+        System.out.println("\n========== 生产者开始生产 ==========");
+        System.out.println("[P操作前] mutex=" + getMutexValue() + 
+                          ", empty=" + getEmptyValue() + 
+                          ", full=" + getFullValue());
+        
+        // 生产者只需要获取 empty 和 mutex，不需要 full
+        System.out.println("[P操作] Swait(empty, mutex) - 申请空缓冲区和互斥锁");
+        andSemaphore.swaitForProducer();
+        
+        System.out.println("[P操作后] mutex=" + getMutexValue() + 
+                          ", empty=" + getEmptyValue() + 
+                          ", full=" + getFullValue());
+        
+        // 临界区：将产品放入缓冲区
+        buffer.offer(product);
+        System.out.println("[临界区] 生产了产品 #" + product.getId() + 
+                          "，当前库存：" + buffer.size());
+        
+        // 模拟临界区停留时间，让 UI 有机会捕捉到 mutex=0 的状态
+        try {
+            Thread.sleep(100);  // 保持 100ms，足够 UI 更新
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw e;
         }
         
-        buffer.offer(product);
-        System.out.println("[调试] 生产了产品 #" + product.getId() + "，当前库存：" + buffer.size());
-        return true;
+        // Ssignal(mutex, full) - 释放互斥锁并增加满位
+        System.out.println("[V操作] Ssignal(mutex, full) - 释放互斥锁并增加满缓冲区");
+        andSemaphore.ssignalForProducer();
+        
+        System.out.println("[V操作后] mutex=" + getMutexValue() + 
+                          ", empty=" + getEmptyValue() + 
+                          ", full=" + getFullValue());
+        System.out.println("========== 生产者完成生产 ==========\n");
     }
     
     /**
-     * 消费产品（从缓冲区取出）
-     * @return 产品对象，如果缓冲区为空则返回 null
+     * 消费者：消费产品（使用 AND 信号量的 Swait/Ssignal）
+     * @return 产品对象
+     * @throws InterruptedException 如果线程被中断
      */
-    public synchronized Product consume() {
-        if (buffer.isEmpty()) {
-            System.out.println("[调试] 缓冲区为空，无法消费");
-            return null;
+    public Product consume() throws InterruptedException {
+        System.out.println("\n========== 消费者开始消费 ==========");
+        System.out.println("[P操作前] mutex=" + getMutexValue() + 
+                          ", empty=" + getEmptyValue() + 
+                          ", full=" + getFullValue());
+        
+        // 消费者只需要获取 full 和 mutex，不需要 empty
+        System.out.println("[P操作] Swait(full, mutex) - 申请满缓冲区和互斥锁");
+        andSemaphore.swaitForConsumer();
+        
+        System.out.println("[P操作后] mutex=" + getMutexValue() + 
+                          ", empty=" + getEmptyValue() + 
+                          ", full=" + getFullValue());
+        
+        // 临界区：从缓冲区取出产品
+        Product product = buffer.poll();
+        System.out.println("[临界区] 消费了产品 #" + product.getId() + 
+                          "，当前库存：" + buffer.size());
+        
+        // 模拟临界区停留时间，让 UI 有机会捕捉到 mutex=0 的状态
+        try {
+            Thread.sleep(100);  // 保持 100ms，足够 UI 更新
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw e;
         }
         
-        Product product = buffer.poll();
-        System.out.println("[调试] 消费了产品 #" + product.getId() + "，当前库存：" + buffer.size());
+        // Ssignal(mutex, empty) - 释放互斥锁并增加空位
+        System.out.println("[V操作] Ssignal(mutex, empty) - 释放互斥锁并增加空缓冲区");
+        andSemaphore.ssignalForConsumer();
+        
+        System.out.println("[V操作后] mutex=" + getMutexValue() + 
+                          ", empty=" + getEmptyValue() + 
+                          ", full=" + getFullValue());
+        System.out.println("========== 消费者完成消费 ==========\n");
+        
         return product;
     }
     
     /**
      * 检查是否为空
+     * @return 如果缓冲区为空返回 true
      */
-    public synchronized boolean isEmpty() {
+    public boolean isEmpty() {
         return buffer.isEmpty();
     }
     
     /**
      * 检查是否已满
+     * @return 如果缓冲区已满返回 true
      */
-    public synchronized boolean isFull() {
+    public boolean isFull() {
         return buffer.size() >= capacity;
     }
     
     /**
      * 获取当前产品数量
+     * @return 缓冲区中的产品数量
      */
     public synchronized int size() {
         return buffer.size();
@@ -110,17 +151,35 @@ public class Buffer {
     }
     
     /**
-     * 检查是否被锁定
+     * 获取 AND 信号量对象
+     * @return AND 信号量实例
      */
-    public boolean isLocked() {
-        return isLocked;
+    public AndSemaphore getAndSemaphore() {
+        return andSemaphore;
     }
     
     /**
-     * 获取锁定者名称
+     * 获取 mutex 信号量值
+     * @return mutex 信号量的当前值
      */
-    public String getLockedBy() {
-        return lockedBy;
+    public int getMutexValue() {
+        return andSemaphore.getSemaphoreValue(MUTEX_INDEX);
+    }
+    
+    /**
+     * 获取 empty 信号量值
+     * @return empty 信号量的当前值
+     */
+    public int getEmptyValue() {
+        return andSemaphore.getSemaphoreValue(EMPTY_INDEX);
+    }
+    
+    /**
+     * 获取 full 信号量值
+     * @return full 信号量的当前值
+     */
+    public int getFullValue() {
+        return andSemaphore.getSemaphoreValue(FULL_INDEX);
     }
     
     /**
@@ -128,6 +187,5 @@ public class Buffer {
      */
     public synchronized void clear() {
         buffer.clear();
-        unlock();
     }
 }
