@@ -54,6 +54,14 @@
                 prefHeight="50"
                 styleClass="experiment-button"/>
         
+        <!-- 实验四：多级反馈队列 -->
+        <Button text="实验四：多级反馈队列调度"
+                fx:id="btnMLFQ"
+                onAction="#handleMLFQ"
+                prefWidth="300"
+                prefHeight="50"
+                styleClass="experiment-button"/>
+        
     </VBox>
     
     <!-- 作者信息 -->

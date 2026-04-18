@@ -513,3 +513,22 @@
     -fx-background-color: #f0fff0;
     -fx-background-radius: 5;
 }
+
+/* ==================== 实验四：MLFQ 专用样式 ==================== */
+
+/* MLFQ 队列信息框样式 */
+.queue-info-box {
+    -fx-background-color: rgba(255, 255, 255, 0.9);
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 12 15;
+    -fx-min-width: 200;
+}
+
+/* MLFQ 队列行样式 */
+.mlfq-queue-row {
+    -fx-background-color: rgba(255, 255, 255, 0.7);
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 8;
+}

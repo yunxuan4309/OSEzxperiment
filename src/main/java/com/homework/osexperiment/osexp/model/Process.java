@@ -27,6 +27,11 @@ public class Process implements Comparable<Process> {
     private double currentPositionX;  // 当前 X 位置
     private double currentPositionY;  // 当前 Y 位置
     
+    // MLFQ 专用字段
+    private int currentQueueLevel;    // 当前所在队列层级（0为最高优先级）
+    private int totalExecutedTime;    // 已执行总时间（用于统计）
+    private int executedInCurrentQueue; // 在当前队列已执行的时间（用于判断降级）
+    
     /**
      * 构造函数
      */
@@ -41,6 +46,9 @@ public class Process implements Comparable<Process> {
         this.arrivalTime = 0;
         this.currentPositionX = 0;
         this.currentPositionY = 0;
+        this.currentQueueLevel = 0;
+        this.totalExecutedTime = 0;
+        this.executedInCurrentQueue = 0;
     }
     
     /**
@@ -161,6 +169,62 @@ public class Process implements Comparable<Process> {
      */
     public void setCurrentPositionY(double currentPositionY) {
         this.currentPositionY = currentPositionY;
+    }
+    
+    /**
+     * 获取当前队列层级（MLFQ用）
+     */
+    public int getCurrentQueueLevel() {
+        return currentQueueLevel;
+    }
+    
+    /**
+     * 设置当前队列层级（MLFQ用）
+     */
+    public void setCurrentQueueLevel(int currentQueueLevel) {
+        this.currentQueueLevel = currentQueueLevel;
+    }
+    
+    /**
+     * 获取已执行总时间（MLFQ用）
+     */
+    public int getTotalExecutedTime() {
+        return totalExecutedTime;
+    }
+    
+    /**
+     * 设置已执行总时间（MLFQ用）
+     */
+    public void setTotalExecutedTime(int totalExecutedTime) {
+        this.totalExecutedTime = totalExecutedTime;
+    }
+    
+    /**
+     * 获取在当前队列已执行的时间（MLFQ用）
+     */
+    public int getExecutedInCurrentQueue() {
+        return executedInCurrentQueue;
+    }
+    
+    /**
+     * 设置在当前队列已执行的时间（MLFQ用）
+     */
+    public void setExecutedInCurrentQueue(int executedInCurrentQueue) {
+        this.executedInCurrentQueue = executedInCurrentQueue;
+    }
+    
+    /**
+     * 增加在当前队列的执行时间（MLFQ用）
+     */
+    public void incrementExecutedInCurrentQueue() {
+        this.executedInCurrentQueue++;
+    }
+    
+    /**
+     * 重置在当前队列的执行时间（降级时调用）
+     */
+    public void resetExecutedInCurrentQueue() {
+        this.executedInCurrentQueue = 0;
     }
     
     @Override

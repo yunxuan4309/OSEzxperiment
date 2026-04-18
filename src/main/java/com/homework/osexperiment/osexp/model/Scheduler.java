@@ -20,7 +20,8 @@ public class Scheduler {
         FCFS,     // 先来先服务
         SJF,      // 短作业优先
         RR,       // 时间片轮转
-        PRIORITY  // 优先级调度
+        PRIORITY, // 优先级调度
+        MLFQ      // 多级反馈队列
     }
     
     private Algorithm algorithm;      // 当前算法
@@ -32,6 +33,12 @@ public class Scheduler {
     private int rrMaxRounds = 2;        // RR 最大循环轮数
     private int rrUnfinishedCount = 0;  // RR 未完成进程数
     
+    // MLFQ 配置（3级队列）
+    private static final int MLFQ_LEVELS = 3;           // 队列层级数
+    private int[] mlfqTimeSlices = {3, 3, 3};          // 各级队列的累计时间片上限
+    @SuppressWarnings("unchecked")
+    private Queue<Process>[] mlfqQueues = new LinkedList[MLFQ_LEVELS]; // 多级队列
+    
     /**
      * 构造函数
      */
@@ -40,6 +47,11 @@ public class Scheduler {
         this.timeSlice = timeSlice;
         this.processList = new ArrayList<>();
         this.scheduleResult = new ArrayList<>();
+        
+        // 初始化 MLFQ 队列
+        for (int i = 0; i < MLFQ_LEVELS; i++) {
+            mlfqQueues[i] = new LinkedList<>();
+        }
     }
     
     /**
@@ -55,6 +67,11 @@ public class Scheduler {
     public void clear() {
         processList.clear();
         scheduleResult.clear();
+        
+        // 清空 MLFQ 队列
+        for (int i = 0; i < MLFQ_LEVELS; i++) {
+            mlfqQueues[i].clear();
+        }
     }
     
     /**
@@ -62,6 +79,17 @@ public class Scheduler {
      */
     public List<Process> execute() {
         scheduleResult.clear();
+        
+        // MLFQ 需要特殊处理：先重置所有进程状态
+        if (algorithm == Algorithm.MLFQ) {
+            for (Process p : processList) {
+                p.setRemainingTime(p.getBurstTime());
+                p.setCurrentQueueLevel(0);
+                p.setTotalExecutedTime(0);
+                p.setWaitingTime(0);
+                p.setTurnaroundTime(0);
+            }
+        }
         
         switch (algorithm) {
             case FCFS:
@@ -75,6 +103,9 @@ public class Scheduler {
                 break;
             case PRIORITY:
                 schedulePriority();
+                break;
+            case MLFQ:
+                scheduleMLFQ();
                 break;
         }
         
@@ -158,6 +189,107 @@ public class Scheduler {
         }
     }
     
+/**
+     * 算法 5：多级反馈队列调度（MLFQ）
+     * 规则：
+     * 1. 每执行一个进程，队列累计+1ms
+     * 2. 队列累计到3ms时，切换到下一级队列
+     * 3. 进程执行一次没完成，立即降级到下一级队列
+     */
+    @SuppressWarnings("unchecked")
+    private void scheduleMLFQ() {
+        for (int i = 0; i < MLFQ_LEVELS; i++) {
+            mlfqQueues[i].clear();
+        }
+
+        List<Process> workingProcesses = new ArrayList<>();
+        for (Process p : processList) {
+            Process copy = new Process(p.getName(), p.getBurstTime(), p.getPriority(), p.getColor());
+            workingProcesses.add(copy);
+        }
+
+        for (Process p : workingProcesses) {
+            mlfqQueues[0].offer(p);
+        }
+
+        boolean hasUnfinished = true;
+        int safetyCounter = 0;
+        int maxIterations = workingProcesses.stream().mapToInt(Process::getBurstTime).sum() * 3;
+
+        int currentLevel = 0;
+        int[] queueExecuted = {0, 0, 0};
+
+        while (hasUnfinished && safetyCounter < maxIterations) {
+            hasUnfinished = false;
+            safetyCounter++;
+
+            // 找非空队列
+            if (mlfqQueues[currentLevel].isEmpty()) {
+                boolean found = false;
+                for (int level = 0; level < MLFQ_LEVELS; level++) {
+                    if (!mlfqQueues[level].isEmpty()) {
+                        currentLevel = level;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) break;
+            }
+
+            Process p = mlfqQueues[currentLevel].poll();
+            queueExecuted[currentLevel]++;
+
+            scheduleResult.add(p);
+            p.setRemainingTime(p.getRemainingTime() - 1);
+            p.setTotalExecutedTime(p.getTotalExecutedTime() + 1);
+
+            System.out.println("[MLFQ] t=" + (scheduleResult.size()-1) + ": 执行 " + p.getName() +
+                             " (Q" + currentLevel + ", 队列累计:" + queueExecuted[currentLevel] + "/3ms)");
+
+            if (p.getRemainingTime() == 0) {
+                System.out.println("[MLFQ] ✓ 进程 " + p.getName() + " 完成");
+                hasUnfinished = true;
+            } else {
+                // 立即降级
+                if (currentLevel < MLFQ_LEVELS - 1) {
+                    mlfqQueues[currentLevel + 1].offer(p);
+                    System.out.println("[MLFQ] ↓ 进程 " + p.getName() + " 降级到 Q" + (currentLevel + 1));
+                } else {
+                    mlfqQueues[currentLevel].offer(p);
+                }
+                hasUnfinished = true;
+            }
+
+            // 检查队列累计是否满
+            if (queueExecuted[currentLevel] >= 3) {
+                if (currentLevel < MLFQ_LEVELS - 1) {
+                    System.out.println("[MLFQ] ⏩ Q" + currentLevel + " 累计满，切到 Q" + (currentLevel + 1));
+                    currentLevel++;
+                } else {
+                    System.out.println("[MLFQ] 🔄 Q2 累计满，切回 Q0");
+                    currentLevel = 0;
+                }
+            }
+        }
+
+        if (safetyCounter >= maxIterations) {
+            System.err.println("[警告] 异常循环");
+        }
+
+        for (Process copy : workingProcesses) {
+            for (Process original : processList) {
+                if (original.getName().equals(copy.getName())) {
+                    original.setCurrentQueueLevel(copy.getCurrentQueueLevel());
+                    original.setTotalExecutedTime(copy.getTotalExecutedTime());
+                    original.setRemainingTime(copy.getRemainingTime());
+                    break;
+                }
+            }
+        }
+
+        System.out.println("[提示] MLFQ 完成，总步数：" + scheduleResult.size());
+    }
+
     /**
      * 计算性能指标
      */
@@ -274,6 +406,33 @@ public class Scheduler {
      */
     public int getRrUnfinishedCount() {
         return rrUnfinishedCount;
+    }
+    
+    /**
+     * 获取 MLFQ 队列数量
+     */
+    public int getMlfqLevels() {
+        return MLFQ_LEVELS;
+    }
+    
+    /**
+     * 获取 MLFQ 指定层级的时间片
+     */
+    public int getMlfqTimeSlice(int level) {
+        if (level >= 0 && level < MLFQ_LEVELS) {
+            return mlfqTimeSlices[level];
+        }
+        return 0;
+    }
+    
+    /**
+     * 获取 MLFQ 指定层级的队列
+     */
+    public Queue<Process> getMlfqQueue(int level) {
+        if (level >= 0 && level < MLFQ_LEVELS) {
+            return mlfqQueues[level];
+        }
+        return null;
     }
     
     /**

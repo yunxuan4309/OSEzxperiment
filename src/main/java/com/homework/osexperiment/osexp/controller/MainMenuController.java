@@ -22,6 +22,9 @@ public class MainMenuController {
     @FXML
     private Button btnProcessScheduling;
     
+    @FXML
+    private Button btnMLFQ;
+    
     /**
      * 进入实验一：进程并发模拟
      */
@@ -47,5 +50,14 @@ public class MainMenuController {
     private void handleProcessScheduling() {
         System.out.println("[调试] 点击了实验三：进程调度模拟");
         SceneSwitcher.switchScene(btnProcessScheduling, "/fxml/ProcessScheduling.fxml", "实验三：进程调度模拟");
+    }
+    
+    /**
+     * 进入实验四：多级反馈队列调度
+     */
+    @FXML
+    private void handleMLFQ() {
+        System.out.println("[调试] 点击了实验四：多级反馈队列调度");
+        SceneSwitcher.switchScene(btnMLFQ, "/fxml/MLFQExperiment.fxml", "实验四：多级反馈队列调度");
     }
 }

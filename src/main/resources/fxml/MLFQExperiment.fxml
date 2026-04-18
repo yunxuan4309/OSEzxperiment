@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.control.SpinnerValueFactory?>
+<?import javafx.geometry.Insets?>
+<?import javafx.geometry.Pos?>
+<?import java.lang.Integer?>
+
+<VBox xmlns="http://javafx.com/javafx/17.0.6" 
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.homework.osexperiment.osexp.controller.MLFQExperimentController"
+      spacing="15"
+      alignment="CENTER"
+      styleClass="experiment-container"
+      prefWidth="1300"
+      prefHeight="850">
+    
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+    
+    <!-- 标题 -->
+    <Label text="实验四：多级反馈队列调度算法" 
+           styleClass="experiment-title-label"/>
+    
+    <!-- 性能统计（移到顶部） -->
+    <HBox spacing="30" 
+          alignment="CENTER"
+          styleClass="stats-section">
+        <VBox alignment="CENTER" spacing="3" styleClass="stat-item">
+            <Label text="📊 平均等待时间：" styleClass="stat-label"/>
+            <Label fx:id="lblAvgWaitTime" text="-- ms" styleClass="stat-value"/>
+        </VBox>
+        <VBox alignment="CENTER" spacing="3" styleClass="stat-item">
+            <Label text="📈 平均周转时间：" styleClass="stat-label"/>
+            <Label fx:id="lblAvgTurnaroundTime" text="-- ms" styleClass="stat-value"/>
+        </VBox>
+        <VBox alignment="CENTER" spacing="3" styleClass="stat-item">
+            <Label text="⚡ CPU 利用率：" styleClass="stat-label"/>
+            <Label fx:id="lblCpuUsage" text="--%" styleClass="stat-value"/>
+        </VBox>
+        <VBox alignment="CENTER" spacing="3" styleClass="stat-item">
+            <Label text="🔄 总降级次数：" styleClass="stat-label"/>
+            <Label fx:id="lblDemotionCount" text="0" styleClass="stat-value"/>
+        </VBox>
+    </HBox>
+    
+    <!-- 算法说明区域 -->
+    <VBox spacing="10"
+          alignment="CENTER"
+          styleClass="config-section">
+        <Label text="📋 算法说明：" styleClass="section-title"/>
+        <HBox spacing="30" alignment="CENTER">
+            <VBox alignment="CENTER" spacing="5" styleClass="queue-info-box">
+                <Label text="🔴 Q0 (最高优先级)" style="-fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
+                <Label text="执行: 1ms/进程" style="-fx-font-size: 12px;"/>
+                <Label text="累计3ms后切换到Q1" style="-fx-font-size: 11px; -fx-text-fill: #666;"/>
+            </VBox>
+            <VBox alignment="CENTER" spacing="5" styleClass="queue-info-box">
+                <Label text="🟡 Q1 (中优先级)" style="-fx-font-weight: bold; -fx-text-fill: #f39c12;"/>
+                <Label text="执行: 1ms/进程" style="-fx-font-size: 12px;"/>
+                <Label text="累计3ms后切换到Q2" style="-fx-font-size: 11px; -fx-text-fill: #666;"/>
+            </VBox>
+            <VBox alignment="CENTER" spacing="5" styleClass="queue-info-box">
+                <Label text="🟢 Q2 (最低优先级)" style="-fx-font-weight: bold; -fx-text-fill: #27ae60;"/>
+                <Label text="执行: 1ms/进程" style="-fx-font-size: 12px;"/>
+                <Label text="累计3ms后切回Q0" style="-fx-font-size: 11px; -fx-text-fill: #666;"/>
+            </VBox>
+        </HBox>
+        <Label text="⚙️ 规则：进程执行1ms后未完成→降级到下一队列；队列累计3ms→切换到下一队列"
+               style="-fx-font-size: 12px; -fx-text-fill: #666; -fx-font-style: italic;"/>
+    </VBox>
+    
+    <!-- 添加进程区域 -->
+    <HBox spacing="15" 
+          alignment="CENTER"
+          styleClass="config-section">
+        <Label text="➕ 添加进程：" styleClass="section-title"/>
+        <HBox spacing="8" alignment="CENTER">
+            <Label text="进程名:" styleClass="small-label"/>
+            <TextField fx:id="txtProcessName" prefWidth="80" promptText="如：A" styleClass="process-input"/>
+        </HBox>
+        <HBox spacing="8" alignment="CENTER">
+            <Label text="运行时间:" styleClass="small-label"/>
+            <Spinner fx:id="spinnerBurstTime" prefWidth="70" styleClass="time-spinner"/>
+            <Label text="ms" styleClass="small-label"/>
+        </HBox>
+        <Button fx:id="btnAddProcess" text="添加进程" onAction="#handleAddProcess" prefWidth="90" styleClass="add-button"/>
+        <Button fx:id="btnClearQueue" text="清空队列" onAction="#handleClearQueue" prefWidth="90" styleClass="clear-button"/>
+    </HBox>
+    
+    <!-- 等待区显示（新添加的进程） -->
+    <VBox spacing="8" 
+          alignment="CENTER"
+          styleClass="queue-section">
+        <Label text="⏳ 待调度进程：" styleClass="section-title"/>
+        <HBox fx:id="waitingAreaContainer" spacing="15" alignment="CENTER" 
+              styleClass="ready-queue" prefWidth="900" prefHeight="90"/>
+    </VBox>
+    
+    <!-- 多级队列显示区域 -->
+    <VBox spacing="8" 
+          alignment="CENTER"
+          styleClass="queue-section">
+        <Label text="📝 多级就绪队列：" styleClass="section-title"/>
+        
+        <!-- Q0 队列 -->
+        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="mlfq-queue-row">
+            <Label text="Q0:" prefWidth="40" style="-fx-font-weight: bold; -fx-text-fill: #e74c3c; -fx-font-size: 14px;"/>
+            <HBox fx:id="queue0Container" spacing="8" alignment="CENTER_LEFT" 
+                  styleClass="ready-queue" prefWidth="750" prefHeight="60"/>
+            <Label fx:id="lblQueue0Time" text="(0/3ms)" style="-fx-font-size: 12px; -fx-text-fill: #e74c3c; -fx-font-weight: bold;"/>
+        </HBox>
+        
+        <!-- Q1 队列 -->
+        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="mlfq-queue-row">
+            <Label text="Q1:" prefWidth="40" style="-fx-font-weight: bold; -fx-text-fill: #f39c12; -fx-font-size: 14px;"/>
+            <HBox fx:id="queue1Container" spacing="8" alignment="CENTER_LEFT" 
+                  styleClass="ready-queue" prefWidth="750" prefHeight="60"/>
+            <Label fx:id="lblQueue1Time" text="(0/4ms)" style="-fx-font-size: 12px; -fx-text-fill: #f39c12; -fx-font-weight: bold;"/>
+        </HBox>
+        
+        <!-- Q2 队列 -->
+        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="mlfq-queue-row">
+            <Label text="Q2:" prefWidth="40" style="-fx-font-weight: bold; -fx-text-fill: #27ae60; -fx-font-size: 14px;"/>
+            <HBox fx:id="queue2Container" spacing="8" alignment="CENTER_LEFT" 
+                  styleClass="ready-queue" prefWidth="750" prefHeight="60"/>
+            <Label fx:id="lblQueue2Time" text="(0/5ms)" style="-fx-font-size: 12px; -fx-text-fill: #27ae60; -fx-font-weight: bold;"/>
+        </HBox>
+    </VBox>
+    
+    <!-- 画布区域 - 用于显示调度动画 -->
+    <VBox fx:id="canvasContainer"
+          styleClass="canvas-container"
+          prefWidth="1250"
+          prefHeight="400"
+          alignment="CENTER">
+        <Pane fx:id="animationArea" 
+              styleClass="animation-area"
+              prefWidth="1230"
+              prefHeight="340">
+            <!-- CPU 区域 -->
+            <VBox fx:id="cpuArea" 
+                  styleClass="cpu-container"
+                  layoutX="60.0" 
+                  layoutY="50.0"
+                  prefWidth="220.0"
+                  prefHeight="280.0"
+                  alignment="CENTER"/>
+            
+            <!-- 甘特图区域 -->
+            <VBox fx:id="ganttArea" 
+                  styleClass="gantt-container"
+                  layoutX="330.0" 
+                  layoutY="20.0"
+                  prefWidth="880.0"
+                  prefHeight="300.0"/>
+        </Pane>
+    </VBox>
+    
+    <!-- 控制按钮区域 -->
+    <HBox spacing="15" 
+          alignment="CENTER">
+        <Button fx:id="btnStart" text="▶️ 开始调度" onAction="#handleStart" prefWidth="120" prefHeight="45" styleClass="control-button"/>
+        <Button fx:id="btnPause" text="⏸️ 暂停" onAction="#handlePause" prefWidth="120" prefHeight="45" styleClass="control-button"/>
+        <Button fx:id="btnReset" text="🔄 重置" onAction="#handleReset" prefWidth="120" prefHeight="45" styleClass="control-button"/>
+        <Button text="返回主菜单" onAction="#handleBackToMain" prefWidth="130" prefHeight="45" styleClass="back-button"/>
+    </HBox>
+    
+    <!-- 作者信息 -->
+    <VBox spacing="3" alignment="CENTER">
+        <Label text="姓名：谢云轩" styleClass="author-label"/>
+        <Label text="学号：632307060623" styleClass="author-label"/>
+    </VBox>
+    
+</VBox>
