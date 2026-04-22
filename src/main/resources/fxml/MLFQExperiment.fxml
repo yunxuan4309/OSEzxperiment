@@ -60,7 +60,7 @@
             <VBox alignment="CENTER" spacing="5" styleClass="queue-info-box">
                 <Label text="🔴 Q0 (最高优先级)" style="-fx-font-weight: bold; -fx-text-fill: #e74c3c;"/>
                 <Label text="执行: 1ms/进程" style="-fx-font-size: 12px;"/>
-                <Label text="累计3ms后切换到Q1" style="-fx-font-size: 11px; -fx-text-fill: #666;"/>
+                <Label text="累计2ms后切换到Q1" style="-fx-font-size: 11px; -fx-text-fill: #666;"/>
             </VBox>
             <VBox alignment="CENTER" spacing="5" styleClass="queue-info-box">
                 <Label text="🟡 Q1 (中优先级)" style="-fx-font-weight: bold; -fx-text-fill: #f39c12;"/>
@@ -70,10 +70,10 @@
             <VBox alignment="CENTER" spacing="5" styleClass="queue-info-box">
                 <Label text="🟢 Q2 (最低优先级)" style="-fx-font-weight: bold; -fx-text-fill: #27ae60;"/>
                 <Label text="执行: 1ms/进程" style="-fx-font-size: 12px;"/>
-                <Label text="累计3ms后切回Q0" style="-fx-font-size: 11px; -fx-text-fill: #666;"/>
+                <Label text="累计4ms后切回Q0" style="-fx-font-size: 11px; -fx-text-fill: #666;"/>
             </VBox>
         </HBox>
-        <Label text="⚙️ 规则：进程执行1ms后未完成→降级到下一队列；队列累计3ms→切换到下一队列"
+        <Label text="⚙️ 规则：进程执行1ms后未完成→降级到下一队列；队列累计满后→切换到下一队列"
                style="-fx-font-size: 12px; -fx-text-fill: #666; -fx-font-style: italic;"/>
     </VBox>
     
@@ -115,7 +115,7 @@
             <Label text="Q0:" prefWidth="40" style="-fx-font-weight: bold; -fx-text-fill: #e74c3c; -fx-font-size: 14px;"/>
             <HBox fx:id="queue0Container" spacing="8" alignment="CENTER_LEFT" 
                   styleClass="ready-queue" prefWidth="750" prefHeight="60"/>
-            <Label fx:id="lblQueue0Time" text="(0/3ms)" style="-fx-font-size: 12px; -fx-text-fill: #e74c3c; -fx-font-weight: bold;"/>
+            <Label fx:id="lblQueue0Time" text="(0/2ms)" style="-fx-font-size: 12px; -fx-text-fill: #e74c3c; -fx-font-weight: bold;"/>
         </HBox>
         
         <!-- Q1 队列 -->
@@ -123,7 +123,7 @@
             <Label text="Q1:" prefWidth="40" style="-fx-font-weight: bold; -fx-text-fill: #f39c12; -fx-font-size: 14px;"/>
             <HBox fx:id="queue1Container" spacing="8" alignment="CENTER_LEFT" 
                   styleClass="ready-queue" prefWidth="750" prefHeight="60"/>
-            <Label fx:id="lblQueue1Time" text="(0/4ms)" style="-fx-font-size: 12px; -fx-text-fill: #f39c12; -fx-font-weight: bold;"/>
+            <Label fx:id="lblQueue1Time" text="(0/3ms)" style="-fx-font-size: 12px; -fx-text-fill: #f39c12; -fx-font-weight: bold;"/>
         </HBox>
         
         <!-- Q2 队列 -->
@@ -131,7 +131,7 @@
             <Label text="Q2:" prefWidth="40" style="-fx-font-weight: bold; -fx-text-fill: #27ae60; -fx-font-size: 14px;"/>
             <HBox fx:id="queue2Container" spacing="8" alignment="CENTER_LEFT" 
                   styleClass="ready-queue" prefWidth="750" prefHeight="60"/>
-            <Label fx:id="lblQueue2Time" text="(0/5ms)" style="-fx-font-size: 12px; -fx-text-fill: #27ae60; -fx-font-weight: bold;"/>
+            <Label fx:id="lblQueue2Time" text="(0/4ms)" style="-fx-font-size: 12px; -fx-text-fill: #27ae60; -fx-font-weight: bold;"/>
         </HBox>
     </VBox>
     

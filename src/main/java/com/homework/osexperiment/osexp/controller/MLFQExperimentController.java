@@ -108,8 +108,11 @@ public class MLFQExperimentController {
         
         // 更新显示
         updateAllQueuesDisplay();
-        
-        System.out.println("[调试] MLFQ配置: 3级队列, 时间片=[3ms, 3ms, 3ms]");
+
+        System.out.println("[调试] MLFQ配置: 3级队列, 时间片=[" +
+            scheduler.getMlfqTimeSlice(0) + "ms, " +
+            scheduler.getMlfqTimeSlice(1) + "ms, " +
+            scheduler.getMlfqTimeSlice(2) + "ms]");
     }
     
     /**
@@ -198,13 +201,13 @@ public class MLFQExperimentController {
     
     /**
      * 更新队列累计时间标签
-     * 显示每个队列的累计执行时间（队列累计3ms切换）
+     * 显示每个队列的累计执行时间（队列累计满后切换）
      */
     private void updateQueueTimeLabels(int currentStep) {
         if (currentStep == 0 || scheduleResult == null || scheduleResult.isEmpty()) {
-            if (lblQueue0Time != null) lblQueue0Time.setText("(0/3ms)");
-            if (lblQueue1Time != null) lblQueue1Time.setText("(0/3ms)");
-            if (lblQueue2Time != null) lblQueue2Time.setText("(0/3ms)");
+            if (lblQueue0Time != null) lblQueue0Time.setText("(0/" + scheduler.getMlfqTimeSlice(0) + "ms)");
+            if (lblQueue1Time != null) lblQueue1Time.setText("(0/" + scheduler.getMlfqTimeSlice(1) + "ms)");
+            if (lblQueue2Time != null) lblQueue2Time.setText("(0/" + scheduler.getMlfqTimeSlice(2) + "ms)");
             return;
         }
 
@@ -214,7 +217,10 @@ public class MLFQExperimentController {
         for (int step = 0; step < currentStep; step++) {
             queueExecuted[currentLevel]++;
 
-            if (queueExecuted[currentLevel] >= 3) {
+            int timeSlice = scheduler.getMlfqTimeSlice(currentLevel);
+            if (queueExecuted[currentLevel] >= timeSlice) {
+                // 重置当前队列的累计计数
+                queueExecuted[currentLevel] = 0;
                 if (currentLevel < 2) {
                     currentLevel++;
                 } else {
@@ -224,13 +230,13 @@ public class MLFQExperimentController {
         }
 
         if (lblQueue0Time != null) {
-            lblQueue0Time.setText(String.format("(%d/3ms)", queueExecuted[0]));
+            lblQueue0Time.setText(String.format("(%d/%dms)", queueExecuted[0], scheduler.getMlfqTimeSlice(0)));
         }
         if (lblQueue1Time != null) {
-            lblQueue1Time.setText(String.format("(%d/3ms)", queueExecuted[1]));
+            lblQueue1Time.setText(String.format("(%d/%dms)", queueExecuted[1], scheduler.getMlfqTimeSlice(1)));
         }
         if (lblQueue2Time != null) {
-            lblQueue2Time.setText(String.format("(%d/3ms)", queueExecuted[2]));
+            lblQueue2Time.setText(String.format("(%d/%dms)", queueExecuted[2], scheduler.getMlfqTimeSlice(2)));
         }
     }
     
@@ -462,35 +468,50 @@ public class MLFQExperimentController {
             }
         }
     }
-    
-/**
+
+    /**
      * 模拟执行过程，计算指定进程在给定步骤时的队列层级
-     * 队列累计3ms切换，进程执行后立即降级
+     * 队列累计满后切换，进程执行后立即降级
      */
     private int simulateQueueLevelForProcess(Process targetProcess, int currentStep) {
         java.util.Map<String, Integer> processQueue = new java.util.HashMap<>();
+        java.util.Map<String, Integer> processRemaining = new java.util.HashMap<>();
         int[] queueExecuted = {0, 0, 0};
         int currentLevel = 0;
 
         for (int step = 0; step < currentStep && step < scheduleResult.size(); step++) {
             Process p = scheduleResult.get(step);
 
-            // 获取或初始化进程队列
+            // 获取进程当前队列和剩余执行次数
             int prevQueue = processQueue.getOrDefault(p.getName(), 0);
-            processQueue.put(p.getName(), prevQueue);
+            int remaining = processRemaining.getOrDefault(p.getName(), getProcessBurstTime(p.getName()));
 
-            queueExecuted[currentLevel]++;
+            // 进程执行1ms，剩余-1
+            remaining--;
 
-            // 进程执行后未完成则降级
-            if (prevQueue == currentLevel) {
-                // 该进程在当前队列，执行后降级
+            // 进程执行后，未完成则降级
+            if (remaining > 0) {
+                // 降级到下一级队列
                 if (prevQueue < 2) {
                     processQueue.put(p.getName(), prevQueue + 1);
                 }
+                // Q2保持不变
+            } else {
+                // 进程完成，保持在当前队列（实际上会被移除）
+                processQueue.put(p.getName(), prevQueue);
             }
 
-            // 检查队列累计是否满
-            if (queueExecuted[currentLevel] >= 3) {
+            // 更新剩余时间
+            processRemaining.put(p.getName(), remaining);
+
+            // 队列累计计数+1
+            queueExecuted[currentLevel]++;
+
+            // 检查队列累计是否满，满则切换
+            int timeSlice = scheduler.getMlfqTimeSlice(currentLevel);
+            if (queueExecuted[currentLevel] >= timeSlice) {
+                // 重置当前队列的累计计数
+                queueExecuted[currentLevel] = 0;
                 if (currentLevel < 2) {
                     currentLevel++;
                 } else {
@@ -500,6 +521,18 @@ public class MLFQExperimentController {
         }
 
         return processQueue.getOrDefault(targetProcess.getName(), 0);
+    }
+
+    /**
+     * 获取进程的总执行时间
+     */
+    private int getProcessBurstTime(String processName) {
+        for (Process p : scheduler.getProcessList()) {
+            if (p.getName().equals(processName)) {
+                return p.getBurstTime();
+            }
+        }
+        return 1;
     }
 
     /**
@@ -602,13 +635,14 @@ public class MLFQExperimentController {
         }
         
         int burstTime = spinnerBurstTime.getValue();
-        
-        // 检查是否超过4个进程
-        if (scheduler.getProcessList().size() >= 4) {
+
+        // 检查是否超过最大进程数
+        int maxProcs = scheduler.getMaxProcesses();
+        if (scheduler.getProcessList().size() >= maxProcs) {
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("提示");
             alert.setHeaderText(null);
-            alert.setContentText("最多只能添加4个进程！");
+            alert.setContentText("最多只能添加" + maxProcs + "个进程！");
             alert.showAndWait();
             return;
         }

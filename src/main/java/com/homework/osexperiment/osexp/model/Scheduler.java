@@ -35,7 +35,33 @@ public class Scheduler {
     
     // MLFQ 配置（3级队列）
     private static final int MLFQ_LEVELS = 3;           // 队列层级数
-    private int[] mlfqTimeSlices = {3, 3, 3};          // 各级队列的累计时间片上限
+    private int[] mlfqTimeSlices = {2, 3, 4};          // 各级队列的累计时间片上限（Q0=2ms, Q1=3ms, Q2=4ms）
+    private int maxProcesses = 6;                      // 最大进程数
+
+    /**
+     * 设置MLFQ各队列的累计时间片
+     * @param timeSlices 时间片数组，长度必须为3
+     */
+    public void setMlfqTimeSlices(int[] timeSlices) {
+        if (timeSlices != null && timeSlices.length >= MLFQ_LEVELS) {
+            this.mlfqTimeSlices = timeSlices.clone();
+        }
+    }
+
+    /**
+     * 设置最大进程数
+     * @param maxProcesses 最大进程数
+     */
+    public void setMaxProcesses(int maxProcesses) {
+        this.maxProcesses = maxProcesses;
+    }
+
+    /**
+     * 获取最大进程数
+     */
+    public int getMaxProcesses() {
+        return maxProcesses;
+    }
     @SuppressWarnings("unchecked")
     private Queue<Process>[] mlfqQueues = new LinkedList[MLFQ_LEVELS]; // 多级队列
     
@@ -193,7 +219,7 @@ public class Scheduler {
      * 算法 5：多级反馈队列调度（MLFQ）
      * 规则：
      * 1. 每执行一个进程，队列累计+1ms
-     * 2. 队列累计到3ms时，切换到下一级队列
+     * 2. 队列累计达到各队列限定值时，切换到下一级队列（Q0=2ms, Q1=3ms, Q2=4ms）
      * 3. 进程执行一次没完成，立即降级到下一级队列
      */
     @SuppressWarnings("unchecked")
@@ -244,7 +270,7 @@ public class Scheduler {
             p.setTotalExecutedTime(p.getTotalExecutedTime() + 1);
 
             System.out.println("[MLFQ] t=" + (scheduleResult.size()-1) + ": 执行 " + p.getName() +
-                             " (Q" + currentLevel + ", 队列累计:" + queueExecuted[currentLevel] + "/3ms)");
+                             " (Q" + currentLevel + ", 队列累计:" + queueExecuted[currentLevel] + "/" + mlfqTimeSlices[currentLevel] + "ms)");
 
             if (p.getRemainingTime() == 0) {
                 System.out.println("[MLFQ] ✓ 进程 " + p.getName() + " 完成");
@@ -261,12 +287,14 @@ public class Scheduler {
             }
 
             // 检查队列累计是否满
-            if (queueExecuted[currentLevel] >= 3) {
+            if (queueExecuted[currentLevel] >= mlfqTimeSlices[currentLevel]) {
+                // 重置当前队列的累计计数
+                queueExecuted[currentLevel] = 0;
                 if (currentLevel < MLFQ_LEVELS - 1) {
-                    System.out.println("[MLFQ] ⏩ Q" + currentLevel + " 累计满，切到 Q" + (currentLevel + 1));
+                    System.out.println("[MLFQ] ⏩ Q" + currentLevel + " 累计满(" + queueExecuted[currentLevel] + ">" + (mlfqTimeSlices[currentLevel]-1) + ")，切到 Q" + (currentLevel + 1));
                     currentLevel++;
                 } else {
-                    System.out.println("[MLFQ] 🔄 Q2 累计满，切回 Q0");
+                    System.out.println("[MLFQ] 🔄 Q2 累计满(" + queueExecuted[currentLevel] + ">" + (mlfqTimeSlices[currentLevel]-1) + ")，切回 Q0");
                     currentLevel = 0;
                 }
             }
